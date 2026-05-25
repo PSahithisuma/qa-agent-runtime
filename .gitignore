@@ -1,0 +1,38 @@
+﻿# Environment  never commit passwords
+.env
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# Logs
+docker-log.txt
+build-log.txt
+
+# Virtual env
+.venv/
+venv/
+
+# OS files
+.DS_Store
+Thumbs.db
+# Model checkpoints
+checkpoints/
+app/agents/oracle/saved_models/
+*.pt
+*.ckpt
+
+# Celery beat schedule
+celerybeat-schedule.*
+
+# Python
+__pycache__/
+*.pyc
+.env
+venv/
+
+lightning_logs/
+*.ckpt
+insert_data*.sql

@@ -1,0 +1,268 @@
+﻿services:
+
+  app:
+    build:
+      context: .
+
+    container_name: qa-app
+
+    ports:
+      - "8000:8000"
+
+    volumes:
+      - .:/app
+
+    env_file:
+      - .env
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+      redis:
+        condition: service_healthy
+
+      qdrant:
+        condition: service_started
+
+      ollama:
+        condition: service_started
+
+    networks:
+      - qa-network
+
+  celery-worker:
+    build:
+      context: .
+
+    container_name: qa-celery
+
+    command: celery -A src.tasks.test_tasks worker --loglevel=info --pool=solo
+
+    volumes:
+      - .:/app
+
+    env_file:
+      - .env
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+      redis:
+        condition: service_healthy
+
+      qdrant:
+        condition: service_started
+
+    networks:
+      - qa-network
+
+  postgres:
+    image: postgres:15-alpine
+
+    container_name: qa-postgres
+
+    restart: always
+
+    environment:
+      POSTGRES_USER: qauser
+      POSTGRES_PASSWORD: qapassword123
+      POSTGRES_DB: qaplatform
+
+    ports:
+      - "5433:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U qauser -d qaplatform"]
+
+      interval: 5s
+
+      timeout: 5s
+
+      retries: 5
+
+    networks:
+      - qa-network
+
+  redis:
+    image: redis:7-alpine
+
+    container_name: qa-redis
+
+    ports:
+      - "6379:6379"
+
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+
+      interval: 5s
+
+      timeout: 3s
+
+      retries: 5
+
+    networks:
+      - qa-network
+
+  qdrant:
+    image: qdrant/qdrant:latest
+
+    container_name: qa-qdrant
+
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+
+    volumes:
+      - qdrant_data:/qdrant/storage
+
+    networks:
+      - qa-network
+
+  ollama:
+    image: ollama/ollama:latest
+
+    container_name: qa-ollama
+
+    ports:
+      - "11434:11434"
+
+    volumes:
+      - ollama_data:/root/.ollama
+
+    networks:
+      - qa-network
+
+  grafana:
+    image: grafana/grafana:latest
+
+    container_name: qa-grafana
+
+    ports:
+      - "3000:3000"
+
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: admin123
+
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/provisioning:/etc/grafana/provisioning
+      - ./grafana/dashboards:/etc/grafana/dashboards
+
+    networks:
+      - qa-network
+
+  playwright:
+    image: mcr.microsoft.com/playwright/python:latest
+
+    container_name: qa-playwright
+
+    volumes:
+      - .:/app
+
+    working_dir: /app
+
+    command: sleep infinity
+
+    networks:
+      - qa-network
+
+  argilla:
+    image: argilla/argilla-quickstart:latest
+
+    container_name: qa-argilla
+
+    ports:
+      - "6900:6900"
+
+    environment:
+      ARGILLA_HOME_PATH: /var/lib/argilla
+      USERNAME: admin
+      PASSWORD: admin1234
+      API_KEY: argilla.apikey
+
+    volumes:
+      - argilla_data:/var/lib/argilla
+
+    networks:
+      - qa-network
+
+  vault:
+    image: hashicorp/vault:latest
+
+    container_name: qa-vault
+
+    ports:
+      - "8200:8200"
+
+    environment:
+      VAULT_DEV_ROOT_TOKEN_ID: qa-vault-token
+      VAULT_DEV_LISTEN_ADDRESS: 0.0.0.0:8200
+
+    networks:
+      - qa-network
+
+  loki:
+    image: grafana/loki:2.9.0
+
+    container_name: qa-loki
+
+    ports:
+      - "3100:3100"
+
+    command: -config.file=/etc/loki/local-config.yaml
+
+    networks:
+      - qa-network
+
+  promtail:
+    image: grafana/promtail:2.9.0
+
+    container_name: qa-promtail
+
+    command: -config.file=/etc/promtail/config.yaml
+
+    volumes:
+      - ./grafana/promtail-config.yaml:/etc/promtail/config.yaml
+
+    networks:
+      - qa-network
+
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:v2.12.1
+
+    container_name: qa-mlflow
+
+    ports:
+      - "5000:5000"
+
+    command: mlflow server --host 0.0.0.0 --port 5000 --default-artifact-root /mlflow/artifacts
+
+    volumes:
+      - mlflow_data:/mlflow
+
+    networks:
+      - qa-network
+
+volumes:
+
+  postgres_data:
+
+  grafana_data:
+
+  qdrant_data:
+
+  ollama_data:
+
+  argilla_data:
+
+  mlflow_data:
+
+networks:
+
+  qa-network:
+    driver: bridge

@@ -1,0 +1,6 @@
+docker
+pytest
+pytest-cov
+rich
+typer
+watchdog
