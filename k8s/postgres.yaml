@@ -22,4 +22,17 @@ spec:
       containers:
         - name: postgres
 
-          image: postgres:15-alpine
+          image: postgres:16
+
+          env:
+            - name: POSTGRES_USER
+              value: qa_user
+
+            - name: POSTGRES_PASSWORD
+              value: qa_password
+
+            - name: POSTGRES_DB
+              value: qa_runtime
+
+          ports:
+            - containerPort: 5432

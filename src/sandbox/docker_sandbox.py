@@ -70,7 +70,8 @@ class DockerSandbox:
 
                 command=(
                     "sh -c "
-                    "'pip install "
+                    "'mkdir -p /tmp "
+                    "&& pip install "
                     "pytest "
                     "pytest-cov "
                     "docker "
@@ -84,11 +85,22 @@ class DockerSandbox:
                 volumes={
                     abs_path: {
                         "bind": "/app",
-                        "mode": "ro"
+                        "mode": "rw"
                     }
                 },
 
                 working_dir="/app",
+
+                environment={
+                    "TMPDIR": "/tmp",
+                    "TEMP": "/tmp",
+                    "TMP": "/tmp",
+                    "PYTHONUNBUFFERED": "1"
+                },
+
+                tmpfs={
+                    "/tmp": "rw,size=512m"
+                },
 
                 detach=True,
 
@@ -96,9 +108,9 @@ class DockerSandbox:
 
                 nano_cpus=1000000000,
 
-                network_disabled=True,
+                network_disabled=False,
 
-                read_only=True,
+                read_only=False,
 
                 pids_limit=100,
 
@@ -108,7 +120,7 @@ class DockerSandbox:
             )
 
             result = container.wait(
-                timeout=60
+                timeout=120
             )
 
             logs = container.logs().decode(

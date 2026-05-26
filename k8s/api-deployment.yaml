@@ -22,9 +22,29 @@ spec:
       containers:
         - name: qa-api
 
-          image: qa-agent-api:latest
+          image: qa-runtime:latest
 
           imagePullPolicy: Never
 
+          command:
+            - uvicorn
+
+          args:
+            - src.api.main:app
+            - --host
+            - 0.0.0.0
+            - --port
+            - "8000"
+
           ports:
             - containerPort: 8000
+
+          env:
+            - name: DATABASE_URL
+              value: postgresql://qa_user:qa_password@postgres:5432/qa_runtime
+
+            - name: REDIS_URL
+              value: redis://redis:6379/0
+
+            - name: OLLAMA_URL
+              value: http://host.minikube.internal:11434

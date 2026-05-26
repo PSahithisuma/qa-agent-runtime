@@ -22,4 +22,23 @@ spec:
       containers:
         - name: celery-worker
 
-          image: qa-agent-api:latest
+          image: qa-runtime:latest
+
+          imagePullPolicy: Never
+
+          command:
+            - celery
+
+          args:
+            - -A
+            - src.tasks.test_tasks
+            - worker
+            - --pool=solo
+            - --loglevel=info
+
+          env:
+            - name: DATABASE_URL
+              value: postgresql://qa_user:qa_password@postgres:5432/qa_runtime
+
+            - name: REDIS_URL
+              value: redis://redis:6379/0
