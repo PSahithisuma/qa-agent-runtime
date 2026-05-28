@@ -2,10 +2,12 @@
 
 WORKDIR /app
 
-# ✅ ADD SYSTEM DEPENDENCIES (VERY IMPORTANT)
+# SYSTEM DEPENDENCIES
 RUN apt-get update && apt-get install -y \
     wget \
     curl \
+    git \
+    build-essential \
     libnss3 \
     libatk1.0-0 \
     libatk-bridge2.0-0 \
@@ -34,9 +36,11 @@ COPY requirements.txt .
 
 RUN pip install --no-cache-dir -r requirements.txt
 
-# ✅ Install Playwright + browsers
+# PLAYWRIGHT
 RUN pip install playwright && playwright install
 
 COPY . .
 
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+EXPOSE 8000
+
+CMD ["uvicorn", "src.api.main:app", "--host", "0.0.0.0", "--port", "8000"]

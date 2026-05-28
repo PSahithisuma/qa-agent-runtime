@@ -29,17 +29,29 @@ def execute_tests(
 
     try:
 
-        asyncio.run(
+        # BROADCAST START EVENT
 
-            manager.broadcast({
+        try:
 
-                "event": "execution_started",
+            asyncio.run(
 
-                "status": "running",
+                manager.broadcast({
 
-                "codebase": codebase_path
-            })
-        )
+                    "event": "execution_started",
+
+                    "status": "running",
+
+                    "codebase": codebase_path
+                })
+            )
+
+        except Exception as ws_error:
+
+            print(
+                f"WebSocket start broadcast failed: {ws_error}"
+            )
+
+        # RUN TESTS
 
         runner = TestRunner()
 
@@ -48,13 +60,15 @@ def execute_tests(
             codebase_path=codebase_path
         )
 
+        # SAVE TEST RUN
+
         run_id = TestService.save_test_run(
             result
         )
 
         result["run_id"] = run_id
 
-        # SAFE VECTOR STORAGE
+        # VECTOR STORAGE
 
         try:
 
@@ -103,30 +117,46 @@ def execute_tests(
                 f"Vector storage failed: {vector_error}"
             )
 
-        asyncio.run(
+        # BROADCAST COMPLETION EVENT
 
-            manager.broadcast({
+        try:
 
-                "event": "execution_completed",
+            asyncio.run(
 
-                "status": "finished",
+                manager.broadcast({
 
-                "run_id": run_id,
+                    "event": "execution_completed",
 
-                "success": result.get(
-                    "success",
-                    False
-                )
-            })
-        )
+                    "status": "finished",
+
+                    "run_id": run_id,
+
+                    "success": result.get(
+                        "success",
+                        False
+                    )
+                })
+            )
+
+        except Exception as ws_error:
+
+            print(
+                f"WebSocket completion broadcast failed: {ws_error}"
+            )
 
         return result
 
     except Exception as e:
 
+        print(
+            f"Test execution failed: {e}"
+        )
+
         return {
 
             "success": False,
 
-            "error": str(e)
+            "error": str(e),
+
+            "failures": []
         }

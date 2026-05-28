@@ -6,6 +6,11 @@
 
     container_name: qa-app
 
+    command: >
+      uvicorn src.api.main:app
+      --host 0.0.0.0
+      --port 8000
+
     ports:
       - "8000:8000"
 
@@ -37,7 +42,10 @@
 
     container_name: qa-celery
 
-    command: celery -A src.tasks.test_tasks worker --loglevel=info --pool=solo
+    command: >
+      celery -A src.tasks.test_tasks worker
+      --loglevel=info
+      --pool=solo
 
     volumes:
       - .:/app
@@ -240,7 +248,11 @@
     ports:
       - "5000:5000"
 
-    command: mlflow server --host 0.0.0.0 --port 5000 --default-artifact-root /mlflow/artifacts
+    command: >
+      mlflow server
+      --host 0.0.0.0
+      --port 5000
+      --default-artifact-root /mlflow/artifacts
 
     volumes:
       - mlflow_data:/mlflow
